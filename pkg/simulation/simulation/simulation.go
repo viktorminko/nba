@@ -23,6 +23,27 @@ func serialize(v interface{}) ([]byte, error) {
 	return bts.Bytes(), nil
 }
 
+func validateGame(g *game.Game) error {
+	if g == nil {
+		return errors.New("game is nil")
+	}
+
+	if len(g.ID) == 0 {
+		return errors.New("game id is empty")
+	}
+
+	if g.Guest == nil {
+		return errors.New("game guest team is nil")
+	}
+
+	if g.Home == nil {
+		return errors.New("game home team is nil")
+	}
+
+	//@TODO add more validation here
+	return nil
+}
+
 func startGame(
 	ctx context.Context,
 	wg *sync.WaitGroup,
@@ -32,11 +53,20 @@ func startGame(
 	eventsCh chan<- []byte,
 	finishCh chan<- struct{}) {
 
-	if curGame == nil {
-		errCh <- errors.New("game is nil")
+	//indicate that game was finished
+	defer func() {
+		finishCh <- struct{}{}
+		wg.Done()
+	}()
+
+	//if game is invalid, return immediately
+	if err := validateGame(curGame); err != nil {
+		errCh <- errors.Wrap(err, "validate game")
+		return
 	}
 
 	log.Println("game started")
+	defer log.Println("game finished")
 
 	defer func() {
 		b, err := serialize(event.GameStatus{
@@ -48,10 +78,6 @@ func startGame(
 		}
 
 		eventsCh <- b
-
-		finishCh <- struct{}{}
-		log.Println("game finished")
-		wg.Done()
 	}()
 
 	bts, err := serialize(event.GameStatus{
