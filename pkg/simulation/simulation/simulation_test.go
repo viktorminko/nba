@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viktorminko/nba/pkg/simulation/event"
 	"github.com/viktorminko/nba/pkg/simulation/game"
@@ -19,11 +18,13 @@ func TestStart(t *testing.T) {
 	eventDuration := 2 * time.Second
 
 	var wg sync.WaitGroup
-	eventsCh, _ := Start(
+	eventsCh, errCh := Start(
 		context.Background(),
 		&wg,
 		[]*game.Game{
+			//valid game
 			{
+				ID: "game1",
 				Home: &game.Team{
 					ID: "Chicago",
 				},
@@ -32,13 +33,49 @@ func TestStart(t *testing.T) {
 					ID: "LA	",
 				},
 			},
+			//invalid game
+			nil,
+			//valid game
+			{
+				ID: "game2",
+				Home: &game.Team{
+					ID: "Bulls",
+				},
+
+				Guest: &game.Team{
+					ID: "Miami	",
+				},
+			},
+			//invalid game empty ID
+			{},
+			//invalid game, empty home team
+			{
+				ID: "game3",
+			},
+			//invalid game, empty guest team
+			{
+				ID: "game4",
+				Home: &game.Team{
+					ID: "NY",
+				},
+			},
+			//invalid game
+			nil,
 		},
 		gameDuration,
 		eventDuration,
 	)
 
+	var errCount int
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for range errCh {
+			errCount++
+		}
+	}()
+
 	var (
-		goals        []event.Goal
 		gameStatuses []event.GameStatus
 	)
 
@@ -49,7 +86,6 @@ func TestStart(t *testing.T) {
 			var goal event.Goal
 			err := gob.NewDecoder(bytes.NewBuffer(msg)).Decode(&goal)
 			if err == nil {
-				goals = append(goals, goal)
 				continue
 			}
 
@@ -65,9 +101,11 @@ func TestStart(t *testing.T) {
 	}()
 
 	wg.Wait()
-	assert.NotEmpty(t, goals)
-	assert.NotEmpty(t, gameStatuses)
 
-	fmt.Println(goals)
-	fmt.Println(gameStatuses)
+	//invalid games
+	assert.Equal(t, 5, errCount)
+
+	//goals might be empty, but statuses might not
+	//each valid game have start and finish events
+	assert.Equal(t, 4, len(gameStatuses))
 }
