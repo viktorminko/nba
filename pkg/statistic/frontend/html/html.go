@@ -20,6 +20,7 @@ func (v ViewFunc) Display(w io.Writer, st *stats.Stats) error {
 type game struct {
 	Home                string
 	Guest               string
+	HomeWins, GuestWins bool
 	Score               string
 	TimeStarted         string
 	TimeFinished        string
@@ -52,6 +53,7 @@ func New(statsTemplatePath string) (ViewFunc, error) {
 			if !v.TimeFinished.IsZero() {
 				finished = v.TimeFinished.Format(time.StampMilli)
 			}
+
 			data.Games = append(data.Games, game{
 				Home:                v.Home.Team.Name,
 				Guest:               v.Guest.Team.Name,
@@ -59,6 +61,8 @@ func New(statsTemplatePath string) (ViewFunc, error) {
 				TimeStarted:         started,
 				TimeFinished:        finished,
 				LastEventSinceStart: lastEvent,
+				HomeWins:            v.Home.Score > v.Guest.Score,
+				GuestWins:           v.Guest.Score > v.Home.Score,
 			})
 		}
 
