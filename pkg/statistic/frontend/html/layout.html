@@ -1,0 +1,48 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>NBA stats</title>
+    <meta name="description" content="NBA stats">
+    <meta name="author" content="Viktor Minko">
+
+    <meta http-equiv="refresh" content="5" />
+
+</head>
+
+<body>
+<table border="1" cellspacing="0" cellpadding="10px">
+    <thead>
+    <tr>
+        <th>Home Team Name</th>
+        <th>Score</th>
+        <th>Guest Team Name</th>
+        <th>Started at</th>
+        <th>Last event timestamp</th>
+        <th>Finished at</th>
+    </tr>
+    </thead>
+    {{range .Games}}
+        <tr>
+            <td>{{.Home}}</td>
+            <td>{{.Score}}</td>
+            <td>{{.Guest}}</td>
+            <td>{{.TimeStarted}}</td>
+            <td>{{.LastEventSinceStart}}</td>
+            <td>{{.TimeFinished}}</td>
+        </tr>
+    {{end}}
+    <tr>
+        <td></td>
+        <td>{{.TotalScore}}</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+</table>
+
+</body>
+</html>
