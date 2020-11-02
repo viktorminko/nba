@@ -1,0 +1,44 @@
+version: '2.1'
+services:
+  simulation:
+    image: simulation:latest
+    build:
+      context: .
+      args:
+        service: "simulation"
+    depends_on:
+      broker:
+        condition: service_started
+    volumes:
+    - ./players.json:/players.json
+    environment:
+      GAME_DURATION: "240s"
+      EVENT_DURATION: "5s"
+    expose:
+      - 8888
+
+  statistic:
+    image: statistic:latest
+    build:
+      context: .
+      args:
+        service: "statistic"
+    volumes:
+      - ./pkg/statistic/frontend/html/layout.html:/layout.html
+    depends_on:
+      broker:
+        condition: service_started
+
+    expose:
+      - 8888
+    ports:
+    - 8080:8080
+
+  broker:
+    image: eclipse-mosquitto
+    volumes:
+      - ./mosquitto_log:/log
+      - ./mosquitto_data:/data
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+    expose:
+      - 1883
