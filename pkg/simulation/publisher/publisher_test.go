@@ -1,4 +1,4 @@
-package pubsub
+package publisher
 
 import (
 	"context"
@@ -102,7 +102,7 @@ func TestStart(t *testing.T) {
 			}
 
 			var wg sync.WaitGroup
-			errCh, err := StartPub(ctx, &wg, dataCh, tt.trans)
+			errCh, err := Start(ctx, &wg, dataCh, tt.trans)
 			if tt.expError {
 				assert.Error(t, err)
 				return

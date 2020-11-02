@@ -16,6 +16,7 @@ type MQTT struct {
 	client  pmqtt.Client
 }
 
+//New returns new MQTT which has MQTTClient inside
 func New(ctx context.Context, cfg ClientConfig) (*MQTT, error) {
 	res := &MQTT{
 		options: pmqtt.NewClientOptions().

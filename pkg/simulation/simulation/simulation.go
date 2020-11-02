@@ -77,6 +77,7 @@ func startGame(
 			return
 		case <-eventTicker.C:
 			//either one of teams scored, or neither scored
+			//nolint
 			r := rand.Intn(3)
 
 			if r == 0 {
@@ -94,6 +95,7 @@ func startGame(
 				curGoal.TeamScoredID = curGame.Guest.ID
 			}
 
+			//nolint gosec
 			curGoal.Value = rand.Intn(2) + 2
 
 			b, err := serialize(curGoal)
@@ -106,6 +108,8 @@ func startGame(
 	}
 }
 
+//Start starts main simulation loop for provided games, duration of the game and duration of events being sent.
+//It returns channel to read events from and channel to read errors happened in simulation.
 func Start(ctx context.Context, wg *sync.WaitGroup, games []*game.Game, gameDuration, eventDuration time.Duration) (
 	<-chan []byte,
 	<-chan error) {
@@ -127,6 +131,8 @@ func Start(ctx context.Context, wg *sync.WaitGroup, games []*game.Game, gameDura
 		go startGame(ctx, wg, games[i], gameDuration, eventDuration, errCh, eventsCh, finishCh)
 	}
 
+	//we need to wait until all games are finished in a non blocking manner
+	//when games are finished we need to close all corresponded channels
 	go func() {
 		defer func() {
 			close(eventsCh)

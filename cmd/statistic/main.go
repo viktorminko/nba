@@ -14,7 +14,7 @@ import (
 	"syscall"
 )
 
-func initTopics(ctx context.Context, config opts.MQTTConfig) (*mqtt.TopicSubscriber, error) {
+func initTopic(ctx context.Context, config opts.MQTTConfig) (*mqtt.TopicSubscriber, error) {
 	client, err := mqtt.New(ctx, mqtt.ClientConfig(config.ClientConfig))
 	if err != nil {
 		return nil, errors.Wrap(err, "connect to mqtt")
@@ -40,7 +40,7 @@ func main() {
 
 	config := opts.ReadConfig()
 
-	topicEvents, err := initTopics(ctx, config.MQTT)
+	topicEvents, err := initTopic(ctx, config.MQTT)
 	if err != nil {
 		log.Fatal("init topic", err)
 	}

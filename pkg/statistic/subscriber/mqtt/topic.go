@@ -24,6 +24,7 @@ func (s *TopicSubscriber) HealthCheck() error {
 	return s.healthCheck()
 }
 
+//CreateTopicSubscriber returns Subscriber of the topic
 func (m *MQTT) CreateTopicSubscriber(ctx context.Context, cfg TopicConfig) (*TopicSubscriber, error) {
 
 	dataCh := make(chan []byte)

@@ -16,6 +16,8 @@ type playerWithTeam struct {
 	Team string `json:"team"`
 }
 
+//Init reads team info from reader and prepares games
+//by randomizing team pairs
 func Init(r io.Reader) ([]*game.Game, error) {
 	playersWithTeams, err := readTeams(r)
 	if err != nil {
@@ -44,11 +46,6 @@ func buildTeams(playersWithTeams []playerWithTeam) []*game.Team {
 			}
 			continue
 		}
-
-		//tm.Players = append(tm.Players, &game.Player{
-		//	ID:   uuid.NewV4().String(),
-		//	Name: pl.Name,
-		//})
 	}
 
 	res := make([]*game.Team, 0, len(teams))

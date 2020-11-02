@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/pkg/errors"
 	"github.com/viktorminko/nba/pkg/simulation/game"
-	"github.com/viktorminko/nba/pkg/simulation/pubsub"
+	"github.com/viktorminko/nba/pkg/simulation/publisher"
 	"github.com/viktorminko/nba/pkg/simulation/simulation"
 	"github.com/viktorminko/nba/pkg/simulation/transport"
 	"io"
@@ -22,16 +22,12 @@ func initSimulation(ctx context.Context, r io.Reader) ([]*game.Game, error) {
 	return games, nil
 }
 
+//start goroutine to handle errors from channel
+//goroutine finishes when channel is closed
 func startErrorHandler(errCh <-chan error) {
 	go func() {
-		for {
-			select {
-			case err, ok := <-errCh:
-				if !ok {
-					return
-				}
-				log.Println(err)
-			}
+		for err := range errCh {
+			log.Println(err)
 		}
 	}()
 }
@@ -39,7 +35,7 @@ func startErrorHandler(errCh <-chan error) {
 func Start(ctx context.Context, initData io.Reader, eventsTopic transport.Transporter, gameDuration, eventDuration time.Duration) error {
 	log.Println("Starting service")
 
-	//randomize team pairs
+	//read teams data from reader and prepare random games
 	games, err := initSimulation(ctx, initData)
 	if err != nil {
 		return errors.Wrap(err, "init simulation")
@@ -47,10 +43,12 @@ func Start(ctx context.Context, initData io.Reader, eventsTopic transport.Transp
 
 	var wg sync.WaitGroup
 
+	//start simulation
 	eventsCh, simulationErrch := simulation.Start(ctx, &wg, games, gameDuration, eventDuration)
 	startErrorHandler(simulationErrch)
 
-	errCh, err := pubsub.StartPub(ctx, &wg, eventsCh, eventsTopic)
+	//subscribe on events from simulation and start queue publisher
+	errCh, err := publisher.Start(ctx, &wg, eventsCh, eventsTopic)
 	if err != nil {
 		return errors.Wrap(err, "start goals publisher")
 	}

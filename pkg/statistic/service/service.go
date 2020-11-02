@@ -32,7 +32,7 @@ func startServer(ctx context.Context, port int, st *stats.Stats, frontend fronte
 			log.Fatalf("listen: %s\n", err)
 		}
 	}()
-	log.Print("Server Started")
+	log.Print("server Started")
 
 	<-ctx.Done()
 
@@ -44,28 +44,26 @@ func startServer(ctx context.Context, port int, st *stats.Stats, frontend fronte
 		log.Fatalf("Server Shutdown Failed:%+v", err)
 	}
 
-	log.Print("Server stopped")
+	log.Print("server stopped")
 }
 
 func startErrorHandler(errCh <-chan error) {
+	//no need to check ctx.Done here since channel will be closed
+	//on context cancellation in goroutine which created this channel
 	go func() {
-		for {
-			select {
-			case err, ok := <-errCh:
-				if !ok {
-					return
-				}
-				log.Println(err)
-			}
+		for err := range errCh {
+			log.Println(err)
 		}
 	}()
 }
 
 func Start(ctx context.Context, eventsSubscriber subscriber.Subscriber, port int, frontend frontend.Displayer) error {
-	log.Println("Starting service")
+	log.Println("starting service")
 
+	//Create global stats
 	st := stats.New()
 
+	//Start statistic updater and read events from Subscriber
 	startErrorHandler(st.StartUpdater(ctx, eventsSubscriber.Subscribe()))
 
 	startServer(ctx, port, st, frontend)

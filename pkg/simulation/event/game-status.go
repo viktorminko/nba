@@ -9,6 +9,7 @@ const (
 	GameStatusFinished = 2
 )
 
+//Status of current game e.g. started/finished
 type GameStatus struct {
 	Game   *game.Game
 	Status Status

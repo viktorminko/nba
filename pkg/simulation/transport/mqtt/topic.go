@@ -10,6 +10,8 @@ type TopicConfig struct {
 	Name string
 }
 
+//TopicTransport represents a topic to send messages to
+//Implements Transporter interface
 type TopicTransport struct {
 	sender      func(r io.Reader) error
 	healthCheck func() error
@@ -23,6 +25,8 @@ func (s *TopicTransport) HealthCheck() error {
 	return s.healthCheck()
 }
 
+//CreateTopicTransport created new transport to send messages to the topic
+//specified in cfg.
 func (m *MQTT) CreateTopicTransport(cfg TopicConfig) *TopicTransport {
 	return &TopicTransport{
 		func(r io.Reader) (err error) {
