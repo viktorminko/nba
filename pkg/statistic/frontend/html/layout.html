@@ -8,12 +8,12 @@
     <meta name="description" content="NBA stats">
     <meta name="author" content="Viktor Minko">
 
-    <meta http-equiv="refresh" content="5" />
+    <meta http-equiv="refresh" content="5"/>
 
 </head>
 
 <body>
-<table border="1" cellspacing="0" cellpadding="10px">
+<table style="margin-left:auto; margin-right:auto;" border="1px" cellpadding="10px" cellspacing="0">
     <thead>
     <tr>
         <th>Home Team Name</th>
@@ -26,9 +26,24 @@
     </thead>
     {{range .Games}}
         <tr>
-            <td>{{.Home}}</td>
+            <td>
+                {{if .HomeWins}}
+                    <strong>{{.Home}}</strong>
+                {{else}}
+                    {{.Home}}
+                {{end}}
+            </td>
+
             <td>{{.Score}}</td>
-            <td>{{.Guest}}</td>
+
+            <td>
+                {{if .GuestWins}}
+                    <strong>{{.Guest}}</strong>
+                {{else}}
+                    {{.Guest}}
+                {{end}}
+            </td>
+
             <td>{{.TimeStarted}}</td>
             <td>{{.LastEventSinceStart}}</td>
             <td>{{.TimeFinished}}</td>

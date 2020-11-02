@@ -5,17 +5,23 @@ import (
 )
 
 type MQTTClientConfig struct {
-	Broker   string
+	//MQTT broker URL
+	Broker string
+
+	//ID of MQTT client
 	ClientID string
 }
 
 type MQTTTopicConfig struct {
+	//Topic name
 	Name string
 }
 
 type MQTTConfig struct {
+	//Events topic config
 	EventsTopic MQTTTopicConfig
 
+	//MQTT client config
 	ClientConfig MQTTClientConfig
 }
 

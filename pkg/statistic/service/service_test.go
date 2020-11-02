@@ -46,7 +46,7 @@ func TestStart(t *testing.T) {
 				exp := stats.New()
 				exp.TotalGuest = 3
 				exp.Games = map[string]*stats.Game{
-					"game1": &stats.Game{
+					"game1": {
 						ID: "game1",
 						Home: &stats.TeamScore{
 							Team: &game.Team{
@@ -66,7 +66,8 @@ func TestStart(t *testing.T) {
 				}
 
 				assert.Equal(t, exp, st)
-				w.Write([]byte(fmt.Sprintf("%#v", st)))
+				_, err := w.Write([]byte(fmt.Sprintf("%#v", st)))
+				assert.NoError(t, err)
 				return nil
 			}),
 		))

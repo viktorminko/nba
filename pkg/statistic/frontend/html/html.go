@@ -1,9 +1,7 @@
 package frontend
 
 import (
-	"encoding/json"
 	"github.com/pkg/errors"
-	"github.com/viktorminko/nba/pkg/statistic/frontend"
 	"github.com/viktorminko/nba/pkg/statistic/stats"
 	"html/template"
 	"io"
@@ -12,15 +10,17 @@ import (
 	"time"
 )
 
-type view func(w io.Writer, st *stats.Stats) error
+//ViewFunc is a wrapper that implements Displayer interface
+type ViewFunc func(w io.Writer, st *stats.Stats) error
 
-func (v view) Display(w io.Writer, st *stats.Stats) error {
+func (v ViewFunc) Display(w io.Writer, st *stats.Stats) error {
 	return v(w, st)
 }
 
 type game struct {
 	Home                string
 	Guest               string
+	HomeWins, GuestWins bool
 	Score               string
 	TimeStarted         string
 	TimeFinished        string
@@ -33,13 +33,15 @@ type viewData struct {
 	Debug      string
 }
 
-func New(statsTemplatePath string) (frontend.Displayer, error) {
+//New returns a function to render statistic into html using
+//template in statsTemplatePath
+func New(statsTemplatePath string) (ViewFunc, error) {
 	tpl, err := template.ParseFiles(statsTemplatePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "parse template file")
 	}
 
-	return view(func(w io.Writer, st *stats.Stats) error {
+	return ViewFunc(func(w io.Writer, st *stats.Stats) error {
 		var data viewData
 
 		for _, v := range st.Games {
@@ -51,6 +53,7 @@ func New(statsTemplatePath string) (frontend.Displayer, error) {
 			if !v.TimeFinished.IsZero() {
 				finished = v.TimeFinished.Format(time.StampMilli)
 			}
+
 			data.Games = append(data.Games, game{
 				Home:                v.Home.Team.Name,
 				Guest:               v.Guest.Team.Name,
@@ -58,13 +61,12 @@ func New(statsTemplatePath string) (frontend.Displayer, error) {
 				TimeStarted:         started,
 				TimeFinished:        finished,
 				LastEventSinceStart: lastEvent,
+				HomeWins:            v.Home.Score > v.Guest.Score,
+				GuestWins:           v.Guest.Score > v.Home.Score,
 			})
 		}
 
 		data.TotalScore = strconv.Itoa(st.TotalHome) + " : " + strconv.Itoa(st.TotalGuest)
-
-		b, _ := json.Marshal(st)
-		data.Debug = string(b)
 
 		//sort by home team
 		sort.Slice(data.Games, func(i, j int) bool {

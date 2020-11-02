@@ -45,29 +45,22 @@ func TestStart(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for {
-			select {
-			case msg, ok := <-eventsCh:
-				if !ok {
-					return
-				}
-
-				var goal event.Goal
-				err := gob.NewDecoder(bytes.NewBuffer(msg)).Decode(&goal)
-				if err == nil {
-					goals = append(goals, goal)
-					continue
-				}
-
-				var statusChange event.GameStatus
-				err = gob.NewDecoder(bytes.NewBuffer(msg)).Decode(&statusChange)
-				if err == nil {
-					gameStatuses = append(gameStatuses, statusChange)
-					continue
-				}
-
-				t.Error("unknown message type")
+		for msg := range eventsCh {
+			var goal event.Goal
+			err := gob.NewDecoder(bytes.NewBuffer(msg)).Decode(&goal)
+			if err == nil {
+				goals = append(goals, goal)
+				continue
 			}
+
+			var statusChange event.GameStatus
+			err = gob.NewDecoder(bytes.NewBuffer(msg)).Decode(&statusChange)
+			if err == nil {
+				gameStatuses = append(gameStatuses, statusChange)
+				continue
+			}
+
+			t.Error("unknown message type")
 		}
 	}()
 

@@ -12,33 +12,49 @@ import (
 	"time"
 )
 
+//TeamScore represents score of the team
 type TeamScore struct {
 	Team  *game.Team
 	Score int
 }
 
+//Game represents statistics for one game
 type Game struct {
-	ID                  string
-	Home                *TeamScore
-	Guest               *TeamScore
-	Status              event.Status
-	TimeStarted         time.Time
-	TimeFinished        time.Time
+	//Game ID
+	ID string
+	//Home team and its score
+	Home *TeamScore
+	//Guest team and its score
+	Guest *TeamScore
+	//Game status e.g. Finished
+	Status event.Status
+	//When game started
+	TimeStarted time.Time
+	//When game finished
+	TimeFinished time.Time
+	//When last event in the game occurred, contains amount of time
+	//spend before game start and event occurred
 	LastEventSinceStart time.Duration
 }
 
+//Statistics
 type Stats struct {
 	sync.Mutex
-	Games                 map[string]*Game
+	//Map of the games in current statistic
+	Games map[string]*Game
+	//Total scores of home and guest teams
 	TotalHome, TotalGuest int
 }
 
+//New returns new Statistic
 func New() *Stats {
 	return &Stats{
 		Games: make(map[string]*Game),
 	}
 }
 
+//Update statistics on Goal event
+//safe for concurrent calls
 func (s *Stats) handleGoalEvent(e *event.Goal) {
 	s.Lock()
 	defer func() {
@@ -74,14 +90,14 @@ func (s *Stats) handleGoalEvent(e *event.Goal) {
 	cur.LastEventSinceStart = time.Since(cur.TimeStarted)
 }
 
+//update statistics on GameStatus event
+//save for concurrent call
 func (s *Stats) handleGameStatusEvent(e event.GameStatus) {
 	s.Lock()
 	defer func() {
 		s.Unlock()
 		log.Println("stats updated with game status")
 	}()
-
-	log.Printf("received game status change event: %s - %s : %d", e.Game.Home.Name, e.Game.Guest.Name, e.Status)
 
 	gameID := e.Game.ID
 	if _, ok := s.Games[gameID]; !ok {
@@ -108,6 +124,9 @@ func (s *Stats) handleGameStatusEvent(e event.GameStatus) {
 	}
 }
 
+//StartUpdater starts statistic updater loop.
+//It reads data from ch, tries to decode message to known event and update statistic.
+//Return channel to read errors happened in current goroutine
 func (s *Stats) StartUpdater(ctx context.Context, ch <-chan []byte) <-chan error {
 	log.Println("start goal updater")
 	errCh := make(chan error)
@@ -123,21 +142,23 @@ func (s *Stats) StartUpdater(ctx context.Context, ch <-chan []byte) <-chan error
 					return
 				}
 
+				var err error
+
 				var goalEvent event.Goal
-				if err := gob.NewDecoder(bytes.NewBuffer(msg)).Decode(&goalEvent); err == nil {
+				if err = gob.NewDecoder(bytes.NewBuffer(msg)).Decode(&goalEvent); err == nil {
 					log.Println("goal message received", goalEvent)
 					s.handleGoalEvent(&goalEvent)
 					continue
 				}
 
 				var gameStatusEvent event.GameStatus
-				if err := gob.NewDecoder(bytes.NewBuffer(msg)).Decode(&gameStatusEvent); err == nil {
+				if err = gob.NewDecoder(bytes.NewBuffer(msg)).Decode(&gameStatusEvent); err == nil {
 					log.Println("game status message received", gameStatusEvent)
 					s.handleGameStatusEvent(gameStatusEvent)
 					continue
 				}
 
-				errCh <- errors.New("unable to deserialize message")
+				errCh <- errors.Wrap(err, "unable to decode message")
 			}
 		}
 
