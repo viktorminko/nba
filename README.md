@@ -41,16 +41,25 @@ Page is updated automatically.
 
 ### Usage
 
-Run containers with docker 
+Build and run containers using Make 
 
 `
-docker-compose up -d
+make up
 `
 
 This will build executables from source and start 3 services mentioned above. Simulation will start once container is up and running. 
 To see statistics navigate to http://0.0.0.0:8080/ in your browser. Page will be updated automatically. 
 Simulation container stops after simulation is done. Statistics container never stops and waiting for new simulation events. 
 Statistics will be updated when simulation is started again. 
+
+
+Run existing containers with docker without building from source
+
+`
+docker-compose up 
+`
+This will run containers using existing images. Use this to save time and avoid building from source.
+
 
 You can use Make to build/run services separately, run unit tests, linter or update dependencies. 
 See https://github.com/viktorminko/nba/blob/master/Makefile
